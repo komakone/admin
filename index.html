@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Administration — BSM SIR</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0efea;--surface:#fff;--bg2:#f5f5f4;--bg3:#eeedea;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#88877f;
+  --brd:rgba(0,0,0,.1);--brd2:rgba(0,0,0,.18);
+  --blue:#185FA5;--blue-t:#0C447C;--blue-bg:#E6F1FB;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-t:#27500A;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-t:#791F1F;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --purple:#6d28d9;--purple-bg:#ede9fe;
+  --r:8px;--font:system-ui,sans-serif;--mono:monospace;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+.login-overlay{display:none;position:fixed;inset:0;background:rgba(240,239,234,.97);z-index:999;align-items:center;justify-content:center}
+.login-overlay.show{display:flex}
+.login-box{background:#fff;border:.5px solid var(--brd);border-radius:16px;padding:2.5rem;width:90%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center}
+.login-logo{height:48px;margin-bottom:1rem}
+.login-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:1.5rem}
+.lf{margin-bottom:10px;text-align:left}
+.lf label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+.lf input{width:100%;border:.5px solid var(--brd2);border-radius:var(--r);padding:10px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)}
+.lf input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.login-btn{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px}
+.login-btn:hover{background:var(--blue-t)}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;min-height:16px;line-height:1.5}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:.5px solid var(--brd);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;min-height:56px;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo-img{height:34px}
+.divider{width:1px;height:26px;background:var(--brd2)}
+.app-name{font-size:14px;font-weight:700}
+.app-sub{font-size:11px;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{padding:7px 14px;border-radius:var(--r);border:.5px solid var(--brd2);background:var(--bg2);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;font-weight:500;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-red{background:var(--red-bg);color:var(--red-t);border-color:rgba(163,45,45,.2)}
+.btn-green{background:var(--green-bg);color:var(--green-t);border-color:rgba(59,109,17,.25)}
+.btn-purple{background:var(--purple-bg);color:var(--purple);border-color:rgba(109,40,217,.25)}
+.db-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg2);border:.5px solid var(--brd);border-radius:999px;font-size:11px;color:var(--text3);font-family:var(--mono)}
+.db-dot{width:6px;height:6px;border-radius:50%;background:#ccc}
+.db-dot.ok{background:var(--green)}
+.db-dot.err{background:var(--red)}
+
+.wrap{max-width:1150px;margin:0 auto;padding:1.5rem}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.kpi{background:var(--surface);border:.5px solid var(--brd);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.kpi-val{font-size:26px;font-weight:700;margin-bottom:2px;letter-spacing:-.02em}
+.kpi-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
+/* CARTE + TABLE */
+.card{background:var(--surface);border:.5px solid var(--brd);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.card-hdr{padding:.9rem 1.25rem;border-bottom:.5px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:600}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:5px 11px;border-radius:999px;border:.5px solid var(--brd);background:transparent;font-size:12px;cursor:pointer;color:var(--text3);font-family:inherit}
+.tab.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-t);font-weight:600}
+.search{border:.5px solid var(--brd2);border-radius:var(--r);padding:6px 12px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);width:200px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--bg2);padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:.5px solid var(--brd);white-space:nowrap}
+tbody tr{border-bottom:.5px solid var(--brd)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg2)}
+tbody td{padding:11px 14px;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block}
+.b-actif{background:var(--green-bg);color:var(--green-t)}.b-actif::before{background:var(--green)}
+.b-attente{background:var(--amber-bg);color:var(--amber)}.b-attente::before{background:var(--amber)}
+.b-bloque{background:var(--red-bg);color:var(--red-t)}.b-bloque::before{background:var(--red)}
+.role{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700;vertical-align:middle}
+.r-owner{background:var(--purple-bg);color:var(--purple)}
+.r-admin{background:var(--blue-bg);color:var(--blue-t)}
+.avatar{width:32px;height:32px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-name{font-weight:600}
+.user-email{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.empty,.loading{text-align:center;padding:2.5rem;color:var(--text3)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--brd2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.75rem;max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:.5rem}
+.modal-text{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;background:var(--text);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay show" id="loginOverlay">
+  <div class="login-box">
+    <img class="login-logo" src="https://www.sir.ci/wp-content/uploads/2023/03/Logo-SIR.svg" alt="SIR" onerror="this.style.display='none'"/>
+    <div class="login-title">Administration BSM</div>
+    <div class="login-sub">Accès réservé aux administrateurs</div>
+    <div class="lf"><label>Email</label>
+      <input type="email" id="li_email" placeholder="prenom.nom@sir.ci" autocomplete="email"/>
+    </div>
+    <div class="lf"><label>Mot de passe</label>
+      <input type="password" id="li_pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">→ Se connecter</button>
+    <div class="login-err" id="li_err"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <img class="logo-img" src="https://www.sir.ci/wp-content/uploads/2023/03/Logo-SIR.svg" alt="SIR" onerror="this.style.display='none'"/>
+    <div class="divider"></div>
+    <div>
+      <div class="app-name">⚙️ Administration</div>
+      <div class="app-sub" id="meLabel">Gestion des utilisateurs BSM SIR</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="db-pill"><div class="db-dot" id="dbDot"></div><span id="dbLabel">Connexion...</span></div>
+    <button class="btn" onclick="loadAll()">↻ Actualiser</button>
+    <button class="btn btn-red" onclick="doLogout()">Déconnexion</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-val" id="kTotal">—</div><div class="kpi-lbl">Comptes</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--amber)" id="kAttente">—</div><div class="kpi-lbl">En attente</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--green)" id="kActifs">—</div><div class="kpi-lbl">Actifs</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--red)" id="kBloques">—</div><div class="kpi-lbl">Bloqués</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--purple)" id="kAdmins">—</div><div class="kpi-lbl">Administrateurs</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-f="all">Tous</button>
+        <button class="tab" data-f="attente">En attente</button>
+        <button class="tab" data-f="actif">Actifs</button>
+        <button class="tab" data-f="bloque">Bloqués</button>
+        <button class="tab" data-f="admin">Administrateurs</button>
+      </div>
+      <input type="text" id="search" class="search" placeholder="Rechercher..."/>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Utilisateur</th><th>Dernière connexion</th><th>Appareil</th><th>Statut</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="usersBody"><tr><td colspan="5" class="loading"><div class="spinner"></div><br/>Chargement...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONFIRMATION -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle">Confirmer</div>
+    <div class="modal-text" id="confirmText"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeConfirm()">Annuler</button>
+      <button class="btn btn-red" id="confirmBtn" onclick="execConfirm()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey           : "AIzaSyC3giHhqn6TcLuFABsAxu8jviHZFoGlkAU",
+  authDomain       : "bon--sir.firebaseapp.com",
+  projectId        : "bon--sir",
+  storageBucket    : "bon--sir.firebasestorage.app",
+  messagingSenderId: "422498380994",
+  appId            : "1:422498380994:web:d96ffe63be4b1e4fef1f5b"
+};
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+const COLORS = ['#185FA5','#3B6D11','#854F0B','#6d28d9','#0891b2','#A32D2D','#0d9488','#b45309'];
+let me = null, myRole = null;          // myRole : 'owner' | 'admin'
+let allUsers = [], adminMap = {};
+let filter = 'all', pending = null;
+
+/* ── CONNEXION ── */
+window.doLogin = async () => {
+  const email = document.getElementById('li_email').value.trim();
+  const pwd   = document.getElementById('li_pwd').value;
+  const err   = document.getElementById('li_err');
+  if (!email || !pwd) { err.textContent = 'Remplissez tous les champs.'; return; }
+  err.textContent = 'Connexion...';
+  try { await signInWithEmailAndPassword(auth, email, pwd); }
+  catch(e) {
+    const m = {'auth/invalid-credential':'Email ou mot de passe incorrect.','auth/too-many-requests':'Trop de tentatives, réessayez plus tard.'};
+    err.textContent = m[e.code] || 'Erreur : ' + e.message;
+  }
+};
+window.doLogout = () => signOut(auth);
+
+function loginMsg(msg) {
+  document.getElementById('loginOverlay').classList.add('show');
+  document.getElementById('li_err').textContent = msg;
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    me = null; myRole = null;
+    document.getElementById('loginOverlay').classList.add('show');
+    setDb('err', 'Non connecté');
+    return;
+  }
+  // Rôle : fiche dans « admins ». Si elle n'existe pas, on tente de s'enregistrer comme propriétaire :
+  // seules les règles Firestore l'acceptent, et uniquement pour le compte propriétaire.
+  let role = null;
+  try {
+    const a = await getDoc(doc(db, 'admins', user.uid));
+    if (a.exists()) {
+      role = a.data().role === 'owner' ? 'owner' : 'admin';
+    } else {
+      try {
+        await setDoc(doc(db, 'admins', user.uid), {
+          role: 'owner', email: user.email || '', nom: user.displayName || '', date: new Date().toISOString()
+        });
+        role = 'owner';
+      } catch(e) { role = null; }
+    }
+  } catch(e) { role = null; }
+
+  if (!role) {
+    await signOut(auth);
+    loginMsg('Accès réservé aux administrateurs.');
+    return;
+  }
+  me = user; myRole = role;
+  document.getElementById('loginOverlay').classList.remove('show');
+  document.getElementById('meLabel').textContent =
+    (role === 'owner' ? 'Propriétaire' : 'Administrateur') + ' — ' + (user.displayName || user.email);
+  setDb('ok', 'Connecté');
+
+  if (role === 'owner') {
+    // Le propriétaire a toujours accès à l'application BSM
+    try {
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid, nom: user.displayName || '', email: user.email || '',
+        derniere_co: new Date().toISOString(), appareil: navigator.userAgent.slice(0, 150),
+        actif: true, statut: 'actif'
+      }, { merge: true });
+    } catch(e) { console.warn(e.message); }
+  }
+  loadAll();
+});
+
+/* ── CHARGEMENT ── */
+window.loadAll = async () => {
+  document.getElementById('usersBody').innerHTML =
+    '<tr><td colspan="5" class="loading"><div class="spinner"></div><br/>Chargement...</td></tr>';
+  try {
+    const [uSnap, aSnap] = await Promise.all([
+      getDocs(collection(db, 'users')), getDocs(collection(db, 'admins'))
+    ]);
+    adminMap = {};
+    aSnap.docs.forEach(d => { adminMap[d.id] = d.data(); });
+    allUsers = uSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Administrateurs sans fiche utilisateur
+    Object.keys(adminMap).forEach(uid => {
+      if (!allUsers.find(u => u.id === uid)) {
+        const a = adminMap[uid];
+        allUsers.push({ id: uid, nom: a.nom, email: a.email, actif: true, statut: 'actif', _pseudo: true });
+      }
+    });
+    allUsers.sort((x, y) => {
+      const px = statusOf(x) === 'attente' ? 0 : 1, py = statusOf(y) === 'attente' ? 0 : 1;
+      if (px !== py) return px - py;
+      return (y.derniere_co || '').localeCompare(x.derniere_co || '');
+    });
+    render();
+  } catch(e) {
+    document.getElementById('usersBody').innerHTML =
+      `<tr><td colspan="5" class="empty">Erreur : ${esc(e.message)}</td></tr>`;
+  }
+};
+
+function statusOf(u) {
+  if (u.actif === true) return 'actif';
+  return u.statut === 'bloqué' ? 'bloque' : 'attente';
+}
+
+/* ── AFFICHAGE ── */
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.getElementById('kTotal').textContent   = allUsers.length;
+  document.getElementById('kAttente').textContent = allUsers.filter(u => statusOf(u) === 'attente').length;
+  document.getElementById('kActifs').textContent  = allUsers.filter(u => statusOf(u) === 'actif').length;
+  document.getElementById('kBloques').textContent = allUsers.filter(u => statusOf(u) === 'bloque').length;
+  document.getElementById('kAdmins').textContent  = Object.keys(adminMap).length;
+
+  const list = allUsers.filter(u => {
+    if (filter === 'admin' && !adminMap[u.id]) return false;
+    if (filter !== 'all' && filter !== 'admin' && statusOf(u) !== filter) return false;
+    return (u.nom || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+  });
+
+  const body = document.getElementById('usersBody');
+  if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun utilisateur</td></tr>'; return; }
+
+  body.innerHTML = list.map((u, i) => {
+    const nom   = u.nom || (u.email || '').split('@')[0] || '—';
+    const st    = statusOf(u);
+    const tRole = adminMap[u.id] ? (adminMap[u.id].role === 'owner' ? 'owner' : 'admin') : null;
+    const self  = me && u.id === me.uid;
+    const canAct = !self && (myRole === 'owner' || !tRole);
+
+    const badge = st === 'actif' ? '<span class="badge b-actif">Actif</span>'
+                : st === 'bloque' ? '<span class="badge b-bloque">Bloqué</span>'
+                : '<span class="badge b-attente">En attente</span>';
+    const roleBadge = tRole === 'owner' ? '<span class="role r-owner">Propriétaire</span>'
+                    : tRole === 'admin' ? '<span class="role r-admin">Admin</span>' : '';
+
+    let acts = '';
+    if (canAct && !u._pseudo) {
+      if (st === 'attente') acts += btn('validate', u.id, '✓ Valider', 'btn-green');
+      if (st === 'actif')   acts += btn('block',    u.id, '🚫 Bloquer', 'btn-red');
+      if (st === 'bloque')  acts += btn('validate', u.id, '✓ Autoriser', 'btn-green');
+      acts += btn('remove', u.id, '🗑 Supprimer', 'btn-red');
+    }
+    if (myRole === 'owner' && !self && tRole !== 'owner') {
+      if (tRole === 'admin')      acts += btn('rmadmin', u.id, 'Retirer admin', 'btn-purple');
+      else if (st === 'actif')    acts += btn('mkadmin', u.id, '★ Nommer admin', 'btn-purple');
+    }
+    if (!acts) acts = '<span style="color:var(--text3)">—</span>';
+
+    return `<tr>
+      <td><div class="user-info">
+        <div class="avatar" style="background:${COLORS[i % COLORS.length]}">${esc(nom.charAt(0).toUpperCase())}</div>
+        <div><div class="user-name">${esc(nom)}${roleBadge}</div><div class="user-email">${esc(u.email || '')}</div></div>
+      </div></td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${u.derniere_co ? fmtDate(u.derniere_co) : '—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${u.appareil ? detectDevice(u.appareil) : '—'}</td>
+      <td>${badge}</td>
+      <td><div class="actions">${acts}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function btn(act, uid, label, cls) {
+  return `<button class="btn btn-sm ${cls}" data-act="${act}" data-uid="${esc(uid)}">${label}</button>`;
+}
+
+/* ── ÉVÉNEMENTS ── */
+document.getElementById('usersBody').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const u = allUsers.find(x => x.id === b.dataset.uid);
+  if (u) act(b.dataset.act, u);
+});
+document.getElementById('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active'); filter = t.dataset.f; render();
+});
+document.getElementById('search').addEventListener('input', render);
+
+function act(type, u) {
+  const nom = u.nom || u.email || 'cet utilisateur';
+  if (type === 'validate') return setStatus(u, true);
+  if (type === 'block')    return setStatus(u, false);
+  if (type === 'remove') {
+    return ask('Supprimer cette fiche ?',
+      `La fiche de <strong>${esc(nom)}</strong> sera supprimée. Son compte de connexion reste dans Firebase : à sa prochaine connexion, il repassera « en attente » et devra être validé à nouveau.`,
+      '🗑 Supprimer', async () => {
+        await deleteDoc(doc(db, 'users', u.id));
+        allUsers = allUsers.filter(x => x.id !== u.id); render(); toast('✓ Fiche supprimée');
+      });
+  }
+  if (type === 'mkadmin') {
+    return ask('Nommer administrateur ?',
+      `<strong>${esc(nom)}</strong> pourra valider, bloquer et supprimer les utilisateurs. Seul le propriétaire pourra le retirer.`,
+      '★ Nommer', async () => {
+        await setDoc(doc(db, 'admins', u.id), {
+          role: 'admin', email: u.email || '', nom: u.nom || '',
+          ajoute_par: me.email || '', date: new Date().toISOString()
+        });
+        adminMap[u.id] = { role: 'admin' }; render(); toast('✓ ' + nom + ' est administrateur');
+      });
+  }
+  if (type === 'rmadmin') {
+    return ask('Retirer les droits admin ?',
+      `<strong>${esc(nom)}</strong> redeviendra un utilisateur normal (son accès à l'application BSM est conservé).`,
+      'Retirer', async () => {
+        await deleteDoc(doc(db, 'admins', u.id));
+        delete adminMap[u.id]; render(); toast('✓ Droits admin retirés');
+      });
+  }
+}
+
+async function setStatus(u, actif) {
+  try {
+    await updateDoc(doc(db, 'users', u.id), { actif, statut: actif ? 'actif' : 'bloqué' });
+    u.actif = actif; u.statut = actif ? 'actif' : 'bloqué';
+    render(); toast(actif ? '✓ Accès autorisé' : '🚫 Accès bloqué');
+  } catch(e) { toast('Erreur : ' + e.message, true); }
+}
+
+/* ── CONFIRMATION ── */
+function ask(title, html, label, fn) {
+  pending = fn;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').innerHTML = html;
+  document.getElementById('confirmBtn').textContent = label;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+window.closeConfirm = () => { document.getElementById('confirmOverlay').classList.remove('open'); pending = null; };
+window.execConfirm = async () => {
+  const fn = pending; closeConfirm();
+  if (!fn) return;
+  try { await fn(); } catch(e) { toast('Refusé : ' + e.message, true); }
+};
+
+/* ── OUTILS ── */
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  } catch(e) { return iso; }
+}
+function detectDevice(ua) {
+  if (/iPhone/i.test(ua))  return '📱 iPhone';
+  if (/Android/i.test(ua)) return '📱 Android';
+  if (/iPad/i.test(ua))    return '📱 iPad';
+  if (/Windows/i.test(ua)) return '🖥 Windows';
+  if (/Mac/i.test(ua))     return '🖥 Mac';
+  if (/Linux/i.test(ua))   return '🖥 Linux';
+  return '🖥 Ordinateur';
+}
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setDb(state, label) {
+  document.getElementById('dbDot').className = 'db-dot ' + state;
+  document.getElementById('dbLabel').textContent = label;
+}
+let _t;
+function toast(msg, err) {
+  clearTimeout(_t);
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.background = err ? '#A32D2D' : '#1a1a18';
+  el.classList.add('show'); _t = setTimeout(() => el.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
